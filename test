@@ -1,0 +1,1095 @@
+	
+
+
+
+
+
+
+
+
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+Acteurs du document : 
+
+Rédacteur	LIEMLAHI Saïd (COO/SOL/SYN) 
+A valider par 	
+Diffusion 	
+Etat 	
+
+
+
+Versions du document : 
+
+Version	Date	Responsable	Nature des modifications
+V 1.0	04/08/2022	LIEMLAHI Saïd	Initiation du document
+			
+			
+			
+			
+			
+
+
+
+ 
+
+
+SOMMAIRE
+
+
+1.	OBJECTIF	4
+2.	CONTEXTE	4
+3.	AGENCES	4
+A.	DESCRIPTION	4
+B.	EXEMPLE DE DONNEES	4
+4.	UTILISATEURS	5
+A.	DESCRIPTION	5
+B.	EXEMPLE DE DONNEES	6
+5.	MATRICE DE VALIDATION ET LAD	6
+A.	MATRICE DE VALIDATION	6
+B.	LAD OD RESEAU :	6
+C.	LAD OD SIEGE :	7
+6.	COMPTES CLIENTS SUR ETHIX	7
+A.	DESCRIPTION	8
+B.	EXEMPLE DE DONNEES	8
+7.	COMPTES GL SUR ETHIX	8
+A.	DESCRIPTION	8
+B.	EXEMPLE DE DONNEES	9
+8.	PARAMETRAGE D’UN MODELE D’OD	9
+9.	CHARGEMENT D’UN FICHIER OD	10
+10.	ANNEXE 1 : API CBS – GENERALITES	12
+A.	AUTHENTIFICATION	12
+B.	UTILISATION DU TOKEN	12
+C.	ERREUR TECHNIQUE	13
+D.	ERREUR FONCTIONNELLE	13
+11.	ANNEXE 2 : APIS CBS – AGENCES	14
+A.	AGENCE PAR CODE	14
+B.	LES DES AGENCES	15
+12.	ANNEXE 3 : APIS CBS – UTILISATEURS	18
+13.	ANNEXE 4 : APIS CBS – COMPTE CLIENT	20
+14.	ANNEXE 5 : APIS CBS – COMPTABILISATION	22
+
+
+ 
+1.	Objectif
+
+Ce document a pour objectif de spécifier les éléments nécessaires à la duplication de la solution existante de Workflow OD pour répondre au besoin de Dar a. Il s’agit de réutiliser les composants existants tout en adaptant les paramètres spécifiques à la nouvelle opération.
+
+2.	Contexte
+
+La solution actuelle de Workflow OD permet de gérer des opérations diverses à travers un circuit de validation configurable. Elle repose sur un référentiel structuré, un paramétrage fin des opérations, et une gestion des utilisateurs intégrée. Le besoin exprimé est de créer une nouvelle instance de cette solution pour les besoins de Dar Al Amane, en conservant la logique de fonctionnement, mais en l’adaptant aux spécificités Ethix / DAA :
+•	Agences
+•	Utilisateurs
+•	Comptes client
+•	Comptes GL
+•	Interfaçage avec le CBS via APIs
+
+3.	Agences
+
+a.	Description
+
+Les agences du CBS Ethix disposent des champs suivants :
+•	BranchNo : code agence
+•	BranchName : nom de l’agence
+•	BranchPhone : numéro de téléphone
+•	BranchAddrLine1 : adresse
+•	BranchAddrLine2 : adresse
+•	BranchAddrLine3 : adresse
+•	BranchCity : ville
+•	BranchGLPrefix : préfixe des comptes GL
+
+Le mapping code agence - préfixe des comptes GL est un point important à noter. Grace à ce mapping, il sera possible d’identifier le compte sur lequel comptabiliser une OD : concaténation préfixe + numéro de compte.
+Une API permet de récupérer la liste de toutes les agences ou une seule en particulier en passant son code comme paramètre.
+•	Endpoint liste de toutes les agences : /API/PhxAdmin/BranchInfo
+•	Endpoint agence via son code : /API/PhxAdmin/BranchInfoById
+
+b.	Exemple de données
+
+Agence EL MECHOUAR :
+•	BranchNo: 8
+•	BranchName: EL MECHOUAR
+•	BranchPhone: 0522869280
+•	BranchAddrLine1: Angle Rue de Rome
+•	BranchAddrLine2: et Rue Abou Firass El Hamadani
+•	BranchAddrLine3: Mers Sultan
+•	BranchCity: CASABLANCA
+•	BranchGLPrefix: 01-01-001-008
+
+Agence Siege DAR AL AMANE :
+•	BranchNo: 900
+•	BranchName: Siege DAR AL AMANE
+•	BranchPhone: 0522438888
+•	BranchAddrLine1: 42  BD ABDELMOUMEN
+•	BranchAddrLine2: Immeuble Walili Street 8ème étage
+•	BranchAddrLine3: Bureau 56
+•	BranchCity: CASABLANCA
+•	BranchGLPrefix: 01-90-001-900
+
+
+ 	En utilisant ces APIs, la solution Workflow OD peut synchroniser périodiquement la liste des agences DAA.
+
+
+4.	Utilisateurs
+
+a.	Description
+
+Le référentiel des utilisateurs sera synchronisé depuis AGIRH et non depuis le CBS. Chaque utilisateur dispose d’une fonction et d’un service sur AGIRH.
+•	La fonction sera utilisée pour définir la matrice de validation.
+•	Le service sera utilisé pour restreindre la visibilité sur les types d’OD propres à chacun.
+Chaque type d’OD est rattaché à un et un seul service.
+A date, les services identifiés sont les suivants : Réseaux, OPE, Conformité, Finance, COO, Marketing, Risque.
+
+Si besoin, il est possible de compléter les données des utilisateurs par celles disponibles au niveau du CBS. Les utilisateurs du CBS Ethix disposent des champs suivants :
+•	EmployeeId : id de l’utilisateur
+•	Status : statut parmi Active, Inactive, Dormant, Deleted, Closed
+•	BranchNo : agence de l’utilisateur
+•	UserName : login
+•	Name : nom et prénom
+
+Une API permet de récupérer la liste de tous les utilisateurs ou un seul en particulier en passant son login comme paramètre :
+•	Endpoint : /API/PhxAdmin/RSMByUser
+
+Le champ BranchNo permet d’identifier si un utilisateur fait partie du réseau ou du siège.
+•	BranchNo : 900  utilisateur siège
+•	Sinon  utilisateur réseau
+
+b.	Exemple de données
+
+Utilisateur de l’agence 8 : EL MECHOUAR
+•	EmployeeId: 360
+•	Status: Active
+•	BranchNo: 8
+•	UserName: MOUSAIDK
+•	Name: KAWTAR MOUSAID
+
+Utilisateur de l’agence 900 : Siege DAR AL AMANE
+•	EmployeeId: 355
+•	Status: Active
+•	BranchNo: 900
+•	UserName: IRAQIK
+•	Name: KENZA IRAQI
+
+ 	En utilisant cette API, la solution Workflow OD peut synchroniser périodiquement certaines données des utilisateurs DAA, disponibles au niveau du CBS.
+
+
+5.	Matrice de validation et LAD
+
+a.	Matrice de validation
+
+La matrice de validation doit être définie pour chaque type d’OD.
+
+Chaque type d’OD peut définir un profil de saisie et jusqu’à 4 profils / niveaux de validation :
+•	Saisie
+•	Validation 1
+•	Validation 2
+•	Validation 3
+•	Validation 4
+
+b.	LAD OD Réseau :
+
+Les LAD ne s’appliquent pas aux comptes internes GL.
+Seules les OD qui touchent les comptes clients sont soumises à LAD. En d’autres termes :
+•	Les LAD sont vérifiées par la solution lors d’une validation d’OD qui touche des comptes clients.
+•	Le contrôle doit se faire sur la somme de tous les montants qui touchent des comptes clients.
+•	Cette somme ne doit pas dépasser la LAD du valideur, sinon, envoyer l’OD pour validation au niveau suivant.
+•	Chaque utilisateur dispose d’une LAD dédiée, à définir au niveau de la solution Workflow.
+
+Exemple de paramétrage LAD :
+DA	RESPONSABLE MARCHE RETAIL, ANIMATION CLIPRI / CLIPRO	RESPONSABLE MARCHE PRO / TPE DAA	COO	DIRECTEUR COMMERCIAL	DIRECTION GENERALE
+Validation jusqu’à 50 K	Validation jusqu’à 500 K	Validation jusqu’à 500 K	Validation jusqu’à 1 M 	Validation jusqu’à 1 M 	Validation au-delà de 1 M 
+
+Exemple de paramétrage OD Réseau :
+•	Saisie : CA/CCP
+•	Validation 1 : DA
+•	Validation 2 : RESPONSABLE MARCHE RETAIL / RESPONSABLE MARCHE PRO
+•	Validation 3 : COO / DIRECTEUR COMMERCIAL
+•	Validation 4 : DIRECTION GENERALE
+
+Exemple OD 1 :
+•	Saisie : CA/CCP  40 K MAD
+•	Validation 1 : DA  LAD OK, OD validée
+
+Exemple OD 2 :
+•	Saisie : CA/CCP  100 K MAD
+•	Validation 1 : DA  LAD insuffisante, envoyer au niveau suivant
+•	Validation 2 : RESPONSABLE MARCHE RETAIL  LAD OK, OD validée
+
+Exemple OD 3 :
+•	Saisie : CA/CCP  600 K MAD
+•	Validation 1 : DA  LAD insuffisante, envoyer au niveau suivant
+•	Validation 2 : RESPONSABLE MARCHE RETAIL  LAD insuffisante, envoyer au niveau suivant
+•	Validation 3 : DIRECTEUR COMMERCIAL  LAD OK, OD validée
+
+Exemple OD 4 :
+•	Saisie : CA/CCP  2 M MAD
+•	Validation 1 : DA  LAD insuffisante, envoyer au niveau suivant
+•	Validation 2 : RESPONSABLE MARCHE RETAIL  LAD insuffisante, envoyer au niveau suivant
+•	Validation 3 : DIRECTEUR COMMERCIAL  LAD insuffisante, envoyer au niveau suivant
+•	Validation 4 : DIRECTION GENERALE  LAD OK, OD validée
+
+c.	LAD OD Siège :
+Les LAD ne s’appliquent pas aux OD siège, quelque soit les types de comptes impactés par l’OD.
+
+
+6.	Comptes clients sur Ethix
+
+a.	Description
+
+Les comptes clients du CBS Ethix disposent des champs suivants :
+•	DpRimNo: code client
+•	DpAcctType: type de compte
+•	DpAcctNo: numéro de compte
+•	DpCurrCode: devise du compte
+•	DpStatus: statut parmi Active, Dormant, Restricted, Unfunded, Closed 
+•	DpBranchNo: agence du compte
+•	DpAvailableBal: solde disponible
+
+Le compte client sur Ethix est un nombre de 11 chiffres, qui débute avec le chiffre 1. Exemple : 10000000841
+
+Ce nombre n’est pas structuré pour pouvoir identifier le type de compte. Il s’agit d’une simple suite de chiffres qui s’incrémente à chaque nouvelle création. La notion de clé compte n’existe pas sur Ethix.
+
+Une API permet de récupérer les données d’un compte client.
+•	Endpoint : /API/Dp/DpInfoByAcct
+
+b.	Exemple de données
+
+Compte client 10000000841 :
+•	DpRimNo: 781
+•	DpAcctType: 101
+•	DpAcctNo: 10000000841
+•	DpCurrCode: MAD
+•	DpStatus: Active
+•	DpBranchNo: 8
+•	DpAvailableBal: 976919.80
+
+
+ 	En utilisant cette API, la solution Workflow OD peut vérifier qu’un compte client existe, est actif et dispose du solde nécessaire.
+
+ 	Le type de compte DpAcctType et l’agence du compte DpBranchNo sont des points importants à noter si l’OD concerne un ou plusieurs comptes clients. En effet, ces données seront nécessaire à l’API de comptabilisation.
+
+
+7.	Comptes GL sur Ethix
+
+a.	Description
+
+Les comptes GL sont structurés comme suit :
+•	Préfixe agence sur 13 caractères
+•	Séparateur : -
+•	Numéro de compte sur 10 chiffres
+
+Le numéro de compte est lui-même structuré comme suit :
+•	Code PCEC sur 4 chiffres
+•	Numéro sur 6 chiffres
+
+
+b.	Exemple de données 
+
+01-90-001-900-3699620001
+
+Champ	Exemple
+Préfixe agence	01-90-001-900
+Séparateur	-
+Code PCEC	3699
+Numéro	620001
+
+
+ 	Le préfixe agence set à construire le numéro de compte GL. En fonction de l’agence renseignée lors de la saisie OD, la solution Workflow peut identifier le préfixe du compte GL à utiliser.
+
+ 	Le code PCEC peut être assimilé à la notion de chapitre comptable actuellement utilisée sur Amplitude et sur la solution Workflow OD.
+
+ 	La solution Workflow OD actuelle utilise le chapitre comptable pour paramétrer un type d’OD et restreindre les comptes que peut saisir un opérateur de saisie d’OD. Pour DAA, il est possible de se baser sur le code PCEC pour un résultat similaire.
+
+
+8.	Paramétrage d’un modèle d’OD
+
+La solution Workflow actuelle permet de paramétrer chaque modèle d’OD.
+Ce paramétrage doit être adapté au contexte DAA comme suit.
+
+Champ	Description	Obligatoire
+Type OD	Type d’OD (ex. : VIREMENT, MONETIQUE, RTGS etc.)
+Permet de regrouper les OD par groupe.	x
+Nom OD	Nom de l’OD	x
+Description	Description de l’OD	x
+Code opération débit	Inutile dans le contexte DAA	
+Code opération crédit	Inutile dans le contexte DAA	
+Chapitre débit	Utiliser le code PCEC sur 4 chiffres pour restreindre la saisie l’OD	
+Chapitre crédit	Utiliser le code PCEC sur 4 chiffres pour restreindre la saisie l’OD	
+Réseau / Siège	Distinction entre les OD réseau et siège	x
+Organisation	Structure métier responsable de l’OD	x
+Service	Structure métier responsable de l’OD	x
+Agence	Code agence : numérique sur 3 chiffres max	
+Compte	Numéro de compte GL sur 10 chiffres	
+
+Remarque : les chapitres débit/crédit permettent de verrouiller la saisie sur certaines valeurs autorisées. Le séparateur « | » permet de définir plusieurs valeurs autorisées.
+
+Chaque OD est associée à un schéma de signature, qui définit les étapes de validation et prend en considération les LAD des utilisateurs.
+
+9.	Chargement d’un fichier OD
+
+La solution Workflow actuelle permet de charger un fichier OD contenant plusieurs écritures. Le fichier est alors traité par la solution et les écritures affichées au niveau de l’écran, sans besoin de les saisir.
+
+Le format du fichier doit être adapté au contexte DAA comme suit :
+•	Clé : la notion de clé de compte n’existe pas chez DAA  à supprimer
+•	Intitulé Compte : inutile dans le fichier de chargement  à supprimer
+•	C. Lettrage : la notion de clé de lettrage n’existe pas chez DAA  Pour permettre néanmoins un lettrage, concaténer cette valeur avec le libellé
+A noter que l’API de comptabilisation n’autorise qu’une description de 80 caractères. Il faut donc limiter le libellé à cette taille moins celle de la clé de lettrage :
+Taille Libellé = 80 – Taille C. Lettrage
+•	Date Val. : il n’est pas possible de forcer la date de valeur d’une transaction via API  à supprimer
+
+COMPTE A DEBITER
+Agence	N°  du cpte	Cle	Intitulé Compte	Montant	Libellé	C. Lettrage	Date Val.
+ 	 	 	 	 	 	 	 
+ 	 	 	 	 	 	 	 
+ 	 	 	 	 	 	 	 
+							
+COMPTE A CREDITER
+Agence	N°  du cpte	Cle	Intitulé Compte	Montant	Libellé	C. Lettrage	Date Val.
+ 	 	 	 	 	 	 	 
+ 	 	 	 	 	 	 	 
+ 	 	 	 	 	 	 	 
+
+La comptabilisation d’une opération contenant plusieurs écritures est possible via API :
+•	Toutes les écritures porteront alors la même référence de comptabilisation, retournée par l’API.
+•	Toutes les écritures seront liées à la même pièce comptable.
+
+Plus le nombre d’écritures est important, plus le temps nécessaire à la comptabilisation sera grand.
+Des tests réalisés sur l’environnement de recette donnent les estimations suivantes :
+
+#	Nb écritures débit	Nb écritures crédit	Tps exécution
+1	1 000	1 000	3-5 minutes
+2	10 000	10 000	30-40 minutes
+
+ 
+10.	ANNEXE 1 : API CBS – Généralités
+
+a.	Authentification
+
+Endpoint : /API/Auth/Login
+
+Requête :
+
+{
+    "Username": "api",
+    "Password": "Azerty01@"
+}
+
+Réponse :
+
+{
+    "Token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImFwaSIsIm5iZiI6MTY1Nzc4NjUxMiwiZXhwIjoxNjU3Nzg2ODEyLCJpYXQiOjE2NTc3ODY1MTJ9.NB9fwxDVGuiba1fqbgoq_mJFLfMD5QZUKj9UrioUMFE",
+    "TokenExpiry": "2022-07-14 09:25:12",
+    "IsAuthenticated": true
+}
+
+b.	Utilisation du Token
+
+•	Le Token doit être utilisé pour les appels aux autres APIs.
+•	Le Token doit être envoyé dans le header de chaque appel :
+Authorization : Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1bmlxdWVfbmFtZSI6ImFwaSIsIm5iZiI6MTY1Nzc4NjUxMiwiZXhwIjoxNjU3Nzg2ODEyLCJpYXQiOjE2NTc3ODY1MTJ9.NB9fwxDVGuiba1fqbgoq_mJFLfMD5QZUKj9UrioUMFE
+•	Le Token a une durée de validité spécifié au niveau du champ TokenExpiry
+•	En cas d’appel à une API avec un Token expiré, le message retour sera comme suit :
+Code retour : HTTP 500
+{
+    "FaultException": {
+        "HttpStatusCode": 200,
+        "HttpStatus": "OK",
+        "ErrorType": "FaultException",
+        "ErrorDescription": "Access is denied."
+    }
+}
+•	En cas d’appel à une API sans Token, le message retour sera comme suit :
+Code retour : HTTP 500
+{
+    "FaultException": {
+        "HttpStatusCode": 500,
+        "HttpStatus": "InternalServerError",
+        "ErrorType": "ITS API Server Exception",
+        "ErrorDescription": "Request Message Header Properties doesn't contains Authorization Property."
+    }
+}
+
+
+c.	Erreur technique
+
+Si l’API est inaccessible (problème réseau, système hs, …), il faut refaire une ou plusieurs tentatives.
+
+d.	Erreur Fonctionnelle
+
+En cas d’erreur fonctionnelle, l’API retourne un code retour : HTTP 200 mais précise l’erreur au niveau du corps de la réponse : balise Status.
+
+Exemple : 
+
+{
+    "Signature": {
+        "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+        "SenderDate": "2022-07-04 10:42:15",
+        "AppName": "API CORE",
+        "Operator": "",
+        "Branch": 900,
+        "CoreUserId": 1,
+        "ChannelId": 600,
+        "ClientAuthInfo": {
+            "RequestGuid": "20221018 100012041 - 87cad928-3a19-43ee-bc06-1377d5993ce0"
+        }
+    },
+    "Status": {
+        "StatusCode": -807090,
+        "StatusDescription": "Failed",
+        "ErrorDescription": "(E) Invalid account number Or Can not select the ISO Currency of this Account Number.",
+        "ExecutionTime": "00:00:02.561"
+    },
+    "FinEntryRs": {
+        "AuthCode": 0,
+        "FinEntrySummary": [
+            {
+                "SequenceNo": 1,
+                "AuthCode": 0,
+                "RefNo": "10026221018100017905",
+                "TranStatus": "Failed",
+                "ErrorCode": "-807090",
+                "ErrorDesc": "(E) Invalid account number Or Can not select the ISO Currency of this Account Number.",
+                "AcctNo": "90000000021",
+                "AcctType": "124",
+                "AcctKey": "CK",
+                "EntryType": "CR",
+                "Description": "Description de la transaction OD",
+                "Amount": 100.0,
+                "Currency": "MAD"
+            }
+        ]
+    }
+}
+ 
+11.	ANNEXE 2 : APIs CBS – Agences
+
+a.	Agence par code
+
+Endpoint :  /API/PhxAdmin/BranchInfoById
+
+La requête doit être envoyé en respectant exactement le format ci-dessous.
+-	RequestNo : identifiant généré par API Core
+-	SenderDate : date de la requête
+-	BranchNo: numéro de l’agence, renseigné au niveau de la solution Workflow OD ou récupéré depuis l’api DpInfoByAcct champ DpBranchNo si l’OD concerne un compte client
+
+
+Requête :
+
+{
+   "Signature": {
+      "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+      "SenderDate": "2023-01-18 10:14:00",
+      "AppName": "API CORE",
+      "Operator": "",
+      "Branch": 900,
+      "CoreUserId": 1,
+      "ChannelId": 600
+   },
+   "BranchInfoByIdRq": {
+      "BranchNo": 8
+   }
+}
+
+Réponse – cas succès :
+
+Code retour HTTP : 200
+Status > StatusCode égal à 0
+
+{
+    "Signature": {
+        "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+        "SenderDate": "2023-01-18 10:14:00",
+        "AppName": "API CORE",
+        "Operator": "",
+        "Branch": 900,
+        "CoreUserId": 1,
+        "ChannelId": 600,
+        "ClientAuthInfo": {
+            "RequestGuid": "20230803 171041227 - 035bd46e-b625-43a5-9143-df91cfdfa231"
+        }
+    },
+    "Status": {
+        "StatusCode": 0,
+        "StatusDescription": "Success",
+        "ErrorDescription": "",
+        "ExecutionTime": "00:00:05.680"
+    },
+    "BranchInfoByIdRs": {
+        "BranchInfoById": {
+            "BranchNo": 8,
+            "BranchName": "EL MECHOUAR",
+            "BranchShortName": "EL MECHOUAR",
+            "BranchTinNo": "111111111111",
+            "BranchSwiftCode": "",
+            "BranchPhone": "0522869280",
+            "BranchFax": "0522869288",
+            "BranchAddrLine1": "Angle Rue de Rome",
+            "BranchAddrLine2": "et Rue Abou Firass El Hamadani",
+            "BranchAddrLine3": "Mers Sultan",
+            "BranchCity": "CASABLANCA",
+            "BranchCountryCode": "MAR",
+            "BranchRoutingNo": "111111111",
+            "BranchSegmentId": 144,
+            "BranchGLPrefix": "01-01-001-008"
+        }
+    }
+}
+
+
+Réponse – cas erreur fonctionnelle :
+
+Code retour HTTP : 200
+Status > StatusCode différent de 0
+Ce cas ne devrait jamais se produire en production.
+
+{
+    "Signature": {
+        "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+        "SenderDate": "2023-01-18 10:14:00",
+        "AppName": "ITS API Client",
+        "Operator": "",
+        "Branch": 900,
+        "CoreUserId": 1,
+        "ChannelId": 600,
+        "ClientAuthInfo": {
+            "RequestGuid": "20230803 171723989 - 61292fcc-90ac-407d-8816-41c14fa45305"
+        }
+    },
+    "Status": {
+        "StatusCode": -150,
+        "StatusDescription": "Failed",
+        "ErrorDescription": "Message Related Script Error or Database Result is NULL or Empty",
+        "ExecutionTime": "00:00:00.482"
+    },
+    "BranchInfoByIdRs": {}
+}
+
+
+b.	Les des agences
+
+Endpoint : /API/PhxAdmin/BranchInfo
+
+La requête doit être envoyé en respectant exactement le format ci-dessous.
+
+Requête :
+
+{
+   "Signature": {
+      "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+      "SenderDate": "2023-01-18 10:14:00",
+      "AppName": "ITS API Client",
+      "Operator": "",
+      "Branch": 900,
+      "CoreUserId": 1,
+      "ChannelId": 600
+   },
+   "BranchInfoRq": {
+   }
+}
+
+Réponse – cas succès :
+
+Code retour HTTP : 200
+Status > StatusCode égal à 0
+
+{
+    "Signature": {
+        "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+        "SenderDate": "2023-01-18 10:14:00",
+        "AppName": "ITS API Client",
+        "Operator": "",
+        "Branch": 900,
+        "CoreUserId": 1,
+        "ChannelId": 600,
+        "ClientAuthInfo": {
+            "RequestGuid": "20230123 102948447 - 5c7a86db-096e-48ca-b9dc-02ec8cc69824"
+        }
+    },
+    "Status": {
+        "StatusCode": 0,
+        "StatusDescription": "Success",
+        "ErrorDescription": "",
+        "ExecutionTime": "00:00:19.211"
+    },
+    "BranchInfoRs": {
+        "BranchInfo": [
+            {
+                "BranchNo": 1,
+                "BranchName": "AGENCE PERSONNEL",
+                "BranchShortName": "AG PERS",
+                "BranchTinNo": "999999999",
+                "BranchSwiftCode": "",
+                "BranchPhone": "0522438888",
+                "BranchFax": "",
+                "BranchAddrLine1": "42 BD ABDELMOUMEN",
+                "BranchAddrLine2": "Immeuble Walili Street 8ème étage",
+                "BranchAddrLine3": "Bureau 56",
+                "BranchCity": "CASABLANCA",
+                "BranchCountryCode": "MAR",
+                "BranchRoutingNo": "111111111",
+                "BranchSegmentId": 17825,
+                "BranchGLPrefix": "01-90-001-001"
+            },
+
+            …
+
+            {
+                "BranchNo": 900,
+                "BranchName": "Siege DAR AL AMANE",
+                "BranchShortName": "Siege Central",
+                "BranchTinNo": "11",
+                "BranchSwiftCode": "",
+                "BranchPhone": "0522438888",
+                "BranchFax": "",
+                "BranchAddrLine1": "42  BD ABDELMOUMEN",
+                "BranchAddrLine2": "Immeuble Walili Street 8ème étage",
+                "BranchAddrLine3": "Bureau 56",
+                "BranchCity": "CASABLANCA",
+                "BranchCountryCode": "MAR",
+                "BranchRoutingNo": "1",
+                "BranchSegmentId": 18733,
+                "BranchGLPrefix": "01-90-001-900"
+            }
+        ]
+    }
+}
+
+Réponse – cas erreur fonctionnelle :
+
+Code retour HTTP : 200
+Status > StatusCode différent de 0
+Ce cas ne devrait jamais se produire en production.
+
+{
+    "Signature": {
+        "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+        "SenderDate": "2023-01-18 10:14:00",
+        "AppName": "ITS API Client",
+        "Operator": "",
+        "Branch": 900,
+        "CoreUserId": 1,
+        "ChannelId": 600,
+        "ClientAuthInfo": {
+            "RequestGuid": "20230123 111419861 - a8470128-fd4a-4156-b48f-aa196bbb01b6"
+        }
+    },
+    "Status": {
+        "StatusCode": -220,
+        "StatusDescription": "Failed",
+        "ErrorDescription": "Incorrect Message Body",
+        "ExecutionTime": "00:00:00.045"
+    },
+    "BranchInfoRs": {}
+}
+
+ 
+12.	ANNEXE 3 : APIs CBS – Utilisateurs
+
+Endpoint :  /API/PhxAdmin/RSMByUser
+
+La requête doit être envoyé en respectant exactement le format ci-dessous.
+
+Requête :
+
+{
+   "Signature": {
+      "RequestNo": "ee074c37-9afe-488a-bc20-a70ee3e03dc7",
+      "SenderDate": "2024-09-24 15:17:19",
+      "AppName": "ITS API Client",
+      "Operator": "",
+      "Branch": 1,
+      "CoreUserId": 1,
+      "ChannelId": 1
+   },
+   "RSMByUserRq": {
+      "EmployeeId": 0,
+      "UserName": ""
+   }
+}
+
+Réponse – cas succès :
+
+Code retour HTTP : 200
+Status > StatusCode égal à 0
+
+{
+    "Signature": {
+        "RequestNo": "ee074c37-9afe-488a-bc20-a70ee3e03dc7",
+        "SenderDate": "2024-09-24 15:17:19",
+        "AppName": "ITS API Client",
+        "Operator": "",
+        "Branch": 1,
+        "CoreUserId": 1,
+        "ChannelId": 1,
+        "ClientAuthInfo": {
+            "RequestGuid": "20251031 093208754 - f3fab101-46a6-4577-8321-672899fe3a3f"
+        }
+    },
+    "Status": {
+        "StatusCode": 0,
+        "StatusDescription": "Success",
+        "ErrorDescription": "",
+        "ExecutionTime": "00:00:00.122"
+    },
+    "RSMByUserRs": {
+        "RSMByUser": [
+            {
+                "EmployeeId": 66,
+                "Status": "Inactive",
+                "BranchNo": 900,
+                "EmplClassCode": 10,
+                "UserName": "AA4787",
+                "Name": "ABIDAR Latifa"
+            },
+
+           …
+
+            {
+                "EmployeeId": 428,
+                "Status": "Active",
+                "BranchNo": 1,
+                "EmplClassCode": 30,
+                "UserName": "TEST01",
+                "Name": "mamdouh test"
+            }
+        ]
+    }
+}
+
+
+Réponse – cas erreur fonctionnelle :
+
+Code retour HTTP : 200
+Status > StatusCode différent de 0
+Ce cas ne devrait jamais se produire en production.
+
+{
+    "Signature": {
+        "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+        "SenderDate": "2023-01-18 10:14:00",
+        "AppName": "ITS API Client",
+        "Operator": "",
+        "Branch": 900,
+        "CoreUserId": 1,
+        "ChannelId": 600,
+        "ClientAuthInfo": {
+            "RequestGuid": "20230803 171723989 - 61292fcc-90ac-407d-8816-41c14fa45305"
+        }
+    },
+    "Status": {
+        "StatusCode": -150,
+        "StatusDescription": "Failed",
+        "ErrorDescription": "Message Related Script Error or Database Result is NULL or Empty",
+        "ExecutionTime": "00:00:00.482"
+    },
+    "RSMByUserRs": {}
+}
+
+
+ 
+13.	ANNEXE 4 : APIs CBS – Compte client
+
+Endpoint : /API/Dp/DpInfoByAcct
+
+La requête doit être envoyé en respectant exactement le format ci-dessous.
+-	RequestNo : identifiant généré par API Core
+-	SenderDate : date de la requête
+-	DpAcctNo : numéro de compte
+
+Requête :
+
+{
+  "Signature": {
+    "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+    "SenderDate": "2022-06-29T11:15:11.392Z",
+    "AppName": "API CORE",
+    "Operator": "",
+    "Branch": 900,
+    "CoreUserId": 1,
+    "ChannelId": 600
+  },
+  "DpInfoByAcctRq": {
+    "DpAcctNo": "10000000841"
+  }
+}
+
+Réponse – cas succès :
+
+Code retour HTTP : 200
+Status > StatusCode égal à 0
+
+{
+  "Signature": {
+    "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+    "SenderDate": "2022-06-29T11:15:11.620Z",
+    "AppName": "API CORE ",
+    "Operator": "",
+    "Branch": 900,
+    "CoreUserId": 1,
+    "ChannelId": 600
+  },
+  "Status": {
+    "StatusCode": 0,
+    "StatusDescription": "Success",
+    "ErrorDescription": "",
+    "ExecutionTime": "00:00:00.440"
+  },
+  "DpInfoByAcctRs": {
+    "DpInfoByAcct": {
+      "DpApplType": "CK",
+      "DpAcctType": "101",
+      "DpAcctKey": "CK",
+      "DpAcctNo": "10000000841",
+      "DpCurrCode": "MAD",
+      "DpStatus": "Active",
+      "DpDesc": "",
+      "DpMatDt": "",
+      "DpCurBal": 845882.31,
+      "DpBranchNo": 8,
+      "DpRsmId": 781,
+      "DpRsmName": "Azia Kablou"
+    }
+  }
+}
+
+Le champ DpBranchNo est utilisé pour récupérer le préfixe de l’agence du client lorsque l’OD concerne un compte client.
+
+Les champs DpAcctType et DpBranchNo sont utilisés lors de la comptabilisation de l’opération via API, lorsque l’OD concerne un compte client.
+
+Réponse – cas erreur fonctionnelle :
+
+Code retour HTTP : 200
+Status > StatusCode différent de 0
+Balise DpInfoByAcctRs vide
+
+{
+    "Signature": {
+        "RequestNo": "7524c944-b3b9-410f-a9c9-7c693cbe0687",
+        "SenderDate": "2022-08-31 12:05:43",
+        "AppName": "API CORE",
+        "Operator": "",
+        "Branch": 1,
+        "CoreUserId": 1,
+        "ChannelId": 1,
+        "ClientAuthInfo": {
+            "RequestGuid": "20221018 100842242 - 7157ede5-06ca-490f-a1cf-0bb7792371ee"
+        }
+    },
+    "Status": {
+        "StatusCode": -150,
+        "StatusDescription": "Failed",
+        "ErrorDescription": "Message Related Script Error or Database Result is NULL or Empty",
+        "ExecutionTime": "00:00:04.138"
+    },
+    "DpInfoByAcctRs": {}
+}
+
+
+ 
+14.	ANNEXE 5 : APIs CBS – Comptabilisation
+
+Endpoint : /API/Fin/FinEntry
+
+La requête doit être envoyé en respectant exactement le format ci-dessous. Le bloc FinEntry est un tableau pouvant contenir plusieurs débit / crédit.
+
+Bloc Signature:
+-	RequestNo : identifiant généré par API Core
+-	SenderDate : date de la requête
+-	Operator : laisser ce champ vide
+-	Branch : agence initiatrice de l’opération
+o	Si l’opération concerne un compte client  code agence récupéré depuis l’API DpInfoByAcct > DpBranchNo
+o	Sinon  code agence du compte GL, sélectionné au niveau de la solution Workflow OD
+
+Bloc FinEntry :
+-	AcctNo :
+o	Compte GL : numéro de compte avec préfixe dynamique, en fonction de l’agence
+o	Compte client : numéro de compte client
+-	AcctKey :
+o	GL pour les comptes GL
+o	CK pour les comtes clients
+-	AcctType :
+o	GL pour les comptes GL
+o	Type de compte récupéré depuis l’API DpInfoByAcct pour les comptes clients
+-	EntryType :
+o	DR : débit
+o	CR : crédit
+-	Description : description de la transaction (taille max 80 caractères) :
+-	Amount : montant de la transaction
+
+
+Requête :
+
+{
+   "Signature": {
+      "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+      "SenderDate": "2022-07-04 10:42:15",
+      "AppName": "API CORE",
+      "Operator": "",
+      "Branch": 8,
+      "CoreUserId": 1,
+      "ChannelId": 600
+   },
+   "FinEntryRq": {
+      "FinEntry": [
+      {
+         "AcctNo": "01-01-001-008-2819600001",
+         "AcctType": "GL",
+         "AcctKey": "GL",
+         "EntryType": "DR",
+         "Description": "Description de la transaction OD",
+         "Amount": 100.0,
+         "Currency": "MAD"
+      },
+      {
+         "AcctNo": "10000000841",
+         "AcctType": "101",
+         "AcctKey": "CK",
+         "EntryType": "CR",
+         "Description": "Description de la transaction OD",
+         "Amount": 100.0,
+         "Currency": "MAD"
+      }
+      ]
+   }
+}
+
+Réponse – cas succès :
+
+Code retour HTTP : 200
+Status > StatusCode égal à 0
+
+Le champ RefNo retourne la référence CBS de la transaction.
+
+{
+    "Signature": {
+        "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+        "SenderDate": "2022-07-04 10:42:15",
+        "AppName": "API CORE",
+        "Operator": "",
+        "Branch": 900,
+        "CoreUserId": 1,
+        "ChannelId": 600,
+        "ClientAuthInfo": {
+            "RequestGuid": "20220712 113442198 - bd6225c2-15fa-45be-b919-aeaba1c8bc22"
+        }
+    },
+    "Status": {
+        "StatusCode": 0,
+        "StatusDescription": "Success",
+        "ErrorDescription": "",
+        "ExecutionTime": "00:00:00.440"
+    },
+    "FinEntryRs": {
+        "AuthCode": 24906130,
+        "RefNo": "10071220712113442387",
+        "FinEntrySummary": [
+            {
+                "SequenceNo": 1,
+                "AuthCode": 24906130,
+                "RefNo": "10071220712113442387",
+                "TranStatus": "Success",
+                "AcctNo": "01-01-001-008-2819600001",
+                "AcctType": "GL",
+                "AcctKey": "GL",
+                "EntryType": "DR",
+                "Description": "Description de la transaction OD",
+                "Amount": 100.0,
+                "Currency": "MAD"
+            },
+            {
+                "SequenceNo": 2,
+                "AuthCode": 5998344,
+                "RefNo": "10071220712113442387",
+                "TranStatus": "Success",
+                "AcctNo": "10000000841",
+                "AcctType": "101",
+                "AcctKey": "CK",
+                "EntryType": "CR",
+                "Description": "Description de la transaction OD",
+                "Amount": 100.0,
+                "Currency": "MAD"
+            }
+        ]
+    }
+}
+
+Réponse – cas erreur fonctionnelle :
+
+Code retour HTTP : 200
+Status > StatusCode différent de 0
+Ce cas ne devrait jamais se produire en production.
+
+{
+    "Signature": {
+        "RequestNo": "f9d1f04c-50d7-4538-b5ce-44c53c69012f",
+        "SenderDate": "2022-07-04 10:42:15",
+        "AppName": "API CORE",
+        "Operator": "",
+        "Branch": 900,
+        "CoreUserId": 1,
+        "ChannelId": 600,
+        "ClientAuthInfo": {
+            "RequestGuid": "20221018 100012041 - 87cad928-3a19-43ee-bc06-1377d5993ce0"
+        }
+    },
+    "Status": {
+        "StatusCode": -807090,
+        "StatusDescription": "Failed",
+        "ErrorDescription": "(E) Invalid account number Or Can not select the ISO Currency of this Account Number.",
+        "ExecutionTime": "00:00:02.561"
+    },
+    "FinEntryRs": {
+        "AuthCode": 0,
+        "FinEntrySummary": [
+            {
+                "SequenceNo": 1,
+                "AuthCode": 0,
+                "RefNo": "10026221018100017905",
+                "TranStatus": "Failed",
+                "ErrorCode": "-807090",
+                "ErrorDesc": "(E) Invalid account number Or Can not select the ISO Currency of this Account Number.",
+                "AcctNo": "90000000021",
+                "AcctType": "124",
+                "AcctKey": "CK",
+                "EntryType": "CR",
+                "Description": "Description de la transaction OD",
+                "Amount": 100.0,
+                "Currency": "MAD"
+            }
+        ]
+    }
+}
+
